@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FollowController;
+use App\Http\Controllers\Api\PostController;
 
 // Rotas públicas
 Route::get('/users/search', [UserController::class, 'search']);
@@ -23,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{id}/follow',        [FollowController::class, 'follow']);
     Route::delete('/users/{id}/unfollow',    [FollowController::class, 'unfollow']);
     Route::get('/users/{id}/is-following',   [FollowController::class, 'isFollowing']);
+    
+    Route::post('/posts',           [PostController::class, 'store']);
+    Route::put('/posts/{id}',       [PostController::class, 'update']);
+    Route::delete('/posts/{id}',    [PostController::class, 'destroy']);
 
 });
 
@@ -33,3 +38,6 @@ Route::get('/users/{username}', [UserController::class, 'show']);
 
 Route::get('/users/{id}/followers', [FollowController::class, 'followers']);
 Route::get('/users/{id}/following', [FollowController::class, 'following']);
+
+Route::get('/posts/{id}',        [PostController::class, 'show']);
+Route::get('/users/{id}/posts',  [PostController::class, 'byUser']);
