@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\FeedController;
 
 // Rotas públicas
 Route::get('/users/search', [UserController::class, 'search']);
@@ -28,6 +29,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts',           [PostController::class, 'store']);
     Route::put('/posts/{id}',       [PostController::class, 'update']);
     Route::delete('/posts/{id}',    [PostController::class, 'destroy']);
+
+    Route::get('/feed', [FeedController::class, 'index']);
 
 });
 
