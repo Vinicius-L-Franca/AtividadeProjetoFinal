@@ -7,10 +7,12 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\LikeController;
+use App\Http\Controllers\Api\CommentController;
 
 // Rotas públicas
 Route::get('/users/search', [UserController::class, 'search']);
 Route::get('/posts/{id}/likes', [LikeController::class, 'likes']);
+Route::get('/posts/{id}/comments', [CommentController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
@@ -36,6 +38,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/posts/{id}/like',   [LikeController::class, 'like']);
     Route::delete('/posts/{id}/unlike', [LikeController::class, 'unlike']);
+
+    Route::post('/posts/{id}/comments',  [CommentController::class, 'store']);
+    Route::put('/comments/{id}',         [CommentController::class, 'update']);
+    Route::delete('/comments/{id}',      [CommentController::class, 'destroy']);
 });
 
 // Rotas públicas com parâmetro dinâmico — devem vir POR ÚLTIMO
