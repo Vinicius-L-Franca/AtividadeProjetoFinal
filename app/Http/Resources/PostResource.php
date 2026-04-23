@@ -14,6 +14,7 @@ class PostResource extends JsonResource
             'caption'        => $this->caption,
             'image_url'      => asset('storage/' . $this->image_url),
             'user'           => new UserResource($this->whenLoaded('user')),
+            'likes_count'    => $this->likes()->count(),
             'created_at'     => $this->created_at,
         ];
     }

@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\FeedController;
+use App\Http\Controllers\Api\LikeController;
 
 // Rotas públicas
 Route::get('/users/search', [UserController::class, 'search']);
+Route::get('/posts/{id}/likes', [LikeController::class, 'likes']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
@@ -32,6 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/feed', [FeedController::class, 'index']);
 
+    Route::post('/posts/{id}/like',   [LikeController::class, 'like']);
+    Route::delete('/posts/{id}/unlike', [LikeController::class, 'unlike']);
 });
 
 // Rotas públicas com parâmetro dinâmico — devem vir POR ÚLTIMO
