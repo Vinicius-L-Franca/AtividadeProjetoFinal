@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\LikeController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\NotificationController;
 
 // Rotas públicas
 Route::get('/users/search', [UserController::class, 'search']);
@@ -25,23 +26,21 @@ Route::middleware('auth:sanctum')->group(function () {
     // Usuário autenticado — deve vir ANTES de {username}
     Route::put('/users/me',         [UserController::class, 'update']);
     Route::post('/users/me/avatar', [UserController::class, 'avatar']);
-
     Route::post('/users/{id}/follow',        [FollowController::class, 'follow']);
     Route::delete('/users/{id}/unfollow',    [FollowController::class, 'unfollow']);
     Route::get('/users/{id}/is-following',   [FollowController::class, 'isFollowing']);
-    
     Route::post('/posts',           [PostController::class, 'store']);
     Route::put('/posts/{id}',       [PostController::class, 'update']);
     Route::delete('/posts/{id}',    [PostController::class, 'destroy']);
-
     Route::get('/feed', [FeedController::class, 'index']);
-
     Route::post('/posts/{id}/like',   [LikeController::class, 'like']);
     Route::delete('/posts/{id}/unlike', [LikeController::class, 'unlike']);
-
     Route::post('/posts/{id}/comments',  [CommentController::class, 'store']);
     Route::put('/comments/{id}',         [CommentController::class, 'update']);
     Route::delete('/comments/{id}',      [CommentController::class, 'destroy']);
+    Route::get('/notifications',               [NotificationController::class, 'index']);
+    Route::put('/notifications/read',          [NotificationController::class, 'markRead']);
+    Route::get('/notifications/unread-count',  [NotificationController::class, 'unreadCount']);
 });
 
 // Rotas públicas com parâmetro dinâmico — devem vir POR ÚLTIMO

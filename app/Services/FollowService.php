@@ -3,13 +3,19 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 
 class FollowService
 {
+    public function __construct(private NotificationService $notificationService) {}
+
     public function follow(User $follower, User $target): void
     {
         $follower->following()->syncWithoutDetaching([$target->id]);
+
+        $this->notificationService->create($target->id, 'follow', [
+            'user_id'   => $follower->id,
+            'user_name' => $follower->name,
+        ]);
     }
 
     public function unfollow(User $follower, User $target): void
@@ -24,11 +30,11 @@ class FollowService
 
     public function followers(User $user)
     {
-        return UserResource::collection($user->followers()->paginate(20));
+        return $user->followers()->paginate(20);
     }
 
     public function following(User $user)
     {
-        return UserResource::collection($user->following()->paginate(20));
+        return $user->following()->paginate(20);
     }
 }

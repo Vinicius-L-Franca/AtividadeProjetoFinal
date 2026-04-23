@@ -9,13 +9,27 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class CommentService
 {
+    public function __construct(private NotificationService $notificationService) {}
+
     public function create(User $user, Post $post, string $body): Comment
     {
-        return Comment::create([
+        $comment = Comment::create([
             'user_id' => $user->id,
             'post_id' => $post->id,
             'body'    => $body,
         ]);
+
+        if ($user->id !== $post->user_id) {
+            $this->notificationService->create($post->user_id, 'comment', [
+                'user_id'    => $user->id,
+                'user_name'  => $user->name,
+                'post_id'    => $post->id,
+                'comment_id' => $comment->id,
+                'body'       => $body,
+            ]);
+        }
+
+        return $comment;
     }
 
     public function update(Comment $comment, string $body): Comment

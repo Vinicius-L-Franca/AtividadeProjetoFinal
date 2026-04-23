@@ -8,6 +8,8 @@ use App\Models\User;
 
 class LikeService
 {
+    public function __construct(private NotificationService $notificationService) {}
+
     public function toggle(User $user, Post $post): array
     {
         $like = Like::where('user_id', $user->id)
@@ -20,6 +22,16 @@ class LikeService
         }
 
         Like::create(['user_id' => $user->id, 'post_id' => $post->id]);
+
+        // Notificar dono do post (exceto se curtiu o próprio post)
+        if ($user->id !== $post->user_id) {
+            $this->notificationService->create($post->user_id, 'like', [
+                'user_id'   => $user->id,
+                'user_name' => $user->name,
+                'post_id'   => $post->id,
+            ]);
+        }
+
         return ['liked' => true, 'likes_count' => $post->likes()->count()];
     }
 
