@@ -10,9 +10,12 @@ class FeedService
 {
     public function getFeed(User $user): LengthAwarePaginator
     {
-        $followingIds = $user->following()->pluck('users.id');
+        $userIdsInFeed = $user->following()
+            ->pluck('users.id')
+            ->push($user->id)
+            ->unique();
 
-        return Post::whereIn('user_id', $followingIds)
+        return Post::whereIn('user_id', $userIdsInFeed)
             ->with('user')
             ->orderByDesc('created_at')
             ->paginate(12);

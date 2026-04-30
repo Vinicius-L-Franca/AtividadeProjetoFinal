@@ -46,4 +46,10 @@ class UserController extends Controller
         $users = $this->userService->search($request->query('q'));
         return response()->json(UserResource::collection($users));
     }
+
+    public function suggestions(Request $request): JsonResponse
+    {
+        $users = $this->userService->suggestions($request->user());
+        return response()->json(UserResource::collection($users));
+    }
 }

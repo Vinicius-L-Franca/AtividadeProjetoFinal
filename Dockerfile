@@ -1,18 +1,50 @@
-FROM php:8.3-fpm
+ARG PHP_VERSION=8.4
+ARG COMPOSER_VERSION=2
 
-RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
-
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-WORKDIR /var/www
-
+FROM composer:${COMPOSER_VERSION} AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    COMPOSER_CACHE_DIR=/tmp/composer-cache \
+    composer install \
+        --no-dev \
+        --no-interaction \
+        --no-scripts \
+        --prefer-dist \
+        --no-progress
 COPY . .
+RUN composer dump-autoload --classmap-authoritative --no-dev
 
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
-
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-
-EXPOSE 9000
-CMD ["php-fpm"]
+FROM dunglas/frankenphp:1-php${PHP_VERSION}-alpine AS runtime
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    SERVER_NAME=":8000" \
+    PHP_INI_MEMORY_LIMIT=256M \
+    COMPOSER_ALLOW_SUPERUSER=1
+RUN apk add --no-cache \
+        bash \
+        mysql-client \
+        tini \
+ && install-php-extensions \
+        pdo_mysql \
+        intl \
+        zip \
+        bcmath \
+        opcache \
+        pcntl \
+        gd \
+        redis
+WORKDIR /app
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=vendor /app        ./
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint
+COPY docker/php.ini       /usr/local/etc/php/conf.d/zz-app.ini
+RUN chmod +x /usr/local/bin/entrypoint \
+ && mkdir -p storage/framework/{cache,sessions,testing,views} storage/logs bootstrap/cache \
+ && chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R ug+rwX storage bootstrap/cache
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:8000/up >/dev/null 2>&1 || exit 1
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint"]
+CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]

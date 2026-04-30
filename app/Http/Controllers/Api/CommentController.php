@@ -32,9 +32,7 @@ class CommentController extends Controller
     {
         $comment = Comment::findOrFail($id);
 
-        if ($request->user()->id !== $comment->user_id) {
-            return response()->json(['message' => 'Não autorizado.'], 403);
-        }
+        $this->authorize('update', $comment);
 
         $request->validate(['body' => 'required|string|max:1000']);
         $updated = $this->commentService->update($comment, $request->input('body'));
@@ -46,9 +44,7 @@ class CommentController extends Controller
     {
         $comment = Comment::findOrFail($id);
 
-        if ($request->user()->id !== $comment->user_id) {
-            return response()->json(['message' => 'Não autorizado.'], 403);
-        }
+        $this->authorize('delete', $comment);
 
         $this->commentService->delete($comment);
 

@@ -16,7 +16,7 @@ class LikeController extends Controller
     public function like(Request $request, string $id): JsonResponse
     {
         $post = Post::findOrFail($id);
-        $result = $this->likeService->toggle($request->user(), $post);
+        $result = $this->likeService->like($request->user(), $post);
         return response()->json($result);
     }
 

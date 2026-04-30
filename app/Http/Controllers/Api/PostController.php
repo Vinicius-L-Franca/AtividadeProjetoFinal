@@ -40,9 +40,7 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
-        if ($request->user()->id !== $post->user_id) {
-            return response()->json(['message' => 'Não autorizado.'], 403);
-        }
+        $this->authorize('update', $post);
 
         $request->validate(['caption' => 'required|string|max:2200']);
         $updated = $this->postService->update($post, $request->input('caption'));
@@ -54,9 +52,7 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
-        if ($request->user()->id !== $post->user_id) {
-            return response()->json(['message' => 'Não autorizado.'], 403);
-        }
+        $this->authorize('delete', $post);
 
         $this->postService->delete($post);
 

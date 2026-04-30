@@ -5,46 +5,44 @@ namespace App\Services;
 use App\Models\Like;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class LikeService
 {
-    public function __construct(private NotificationService $notificationService) {}
-
-    public function toggle(User $user, Post $post): array
+    /**
+     * Curtir um post.
+     * Idempotente: curtir repetido mantém curtido, sem duplicar.
+     */
+    public function like(User $user, Post $post): array
     {
-        $like = Like::where('user_id', $user->id)
-            ->where('post_id', $post->id)
-            ->first();
+        $like = Like::firstOrCreate([
+            'user_id' => $user->id,
+            'post_id' => $post->id,
+        ]);
 
-        if ($like) {
-            $like->delete();
-            return ['liked' => false, 'likes_count' => $post->likes()->count()];
-        }
-
-        Like::create(['user_id' => $user->id, 'post_id' => $post->id]);
-
-        // Notificar dono do post (exceto se curtiu o próprio post)
-        if ($user->id !== $post->user_id) {
-            $this->notificationService->create($post->user_id, 'like', [
-                'user_id'   => $user->id,
-                'user_name' => $user->name,
-                'post_id'   => $post->id,
-            ]);
-        }
-
-        return ['liked' => true, 'likes_count' => $post->likes()->count()];
+        return [
+            'liked'       => true,
+            'likes_count' => $post->likes()->count(),
+        ];
     }
 
+    /**
+     * Descurtir um post.
+     * Idempotente: descurtir repetido mantém descurtido, sem erro.
+     */
     public function unlike(User $user, Post $post): array
     {
         Like::where('user_id', $user->id)
             ->where('post_id', $post->id)
-            ->delete();
+            ->delete(); // retorna 0 silenciosamente se não existia
 
-        return ['liked' => false, 'likes_count' => $post->likes()->count()];
+        return [
+            'liked'       => false,
+            'likes_count' => $post->likes()->count(),
+        ];
     }
 
-    public function likedBy(Post $post)
+    public function likedBy(Post $post): LengthAwarePaginator
     {
         return $post->likes()->with('user')->paginate(20);
     }

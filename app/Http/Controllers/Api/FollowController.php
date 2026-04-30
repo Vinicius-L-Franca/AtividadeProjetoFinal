@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\FollowService;
 use Illuminate\Http\JsonResponse;
@@ -12,19 +13,21 @@ class FollowController extends Controller
 {
     public function __construct(private FollowService $followService) {}
 
+    /**
+     * POST /api/users/{id}/follow
+     * SelfFollowException lança 403 automaticamente via render().
+     */
     public function follow(Request $request, int $id): JsonResponse
     {
         $target = User::findOrFail($id);
-
-        if ($request->user()->id === $target->id) {
-            return response()->json(['message' => 'Você não pode seguir a si mesmo.'], 422);
-        }
-
         $this->followService->follow($request->user(), $target);
 
         return response()->json(['message' => 'Usuário seguido com sucesso.']);
     }
 
+    /**
+     * DELETE /api/users/{id}/follow
+     */
     public function unfollow(Request $request, int $id): JsonResponse
     {
         $target = User::findOrFail($id);

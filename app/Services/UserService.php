@@ -38,4 +38,19 @@ class UserService
             ->limit(20)
             ->get();
     }
+
+    /**
+     * Sugestões: usuários que $user ainda não segue, ordenados por nº de seguidores.
+     */
+    public function suggestions(User $user, int $limit = 10): \Illuminate\Database\Eloquent\Collection
+    {
+        $followingIds = $user->following()->pluck('users.id');
+
+        return User::whereNotIn('id', $followingIds)
+            ->where('id', '!=', $user->id)
+            ->withCount('followers')
+            ->orderByDesc('followers_count')
+            ->limit($limit)
+            ->get();
+    }
 }
