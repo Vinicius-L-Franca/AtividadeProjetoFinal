@@ -1,58 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Instaclone
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Instaclone é uma API exemplo estilo Instagram construída com Laravel 13 e Sanctum (token-based). Este repositório inclui documentação interativa OpenAPI/Swagger e foi preparado para execução via Docker Compose.
 
-## About Laravel
+**Principais recursos**
+- Endpoints para autenticação, usuários, posts, feed, likes, comentários e follows
+- Documentação OpenAPI 3.0.3 e Swagger UI customizado
+- Testes PHPUnit incluídos
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Requisitos**
+- Docker e Docker Compose
+- Git
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Quick Start (Docker)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+1. Copie/edite o ambiente:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env
+# editar .env se necessário (DB_HOST/DB_PORT etc.)
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+2. Construir e subir os serviços (recomendado após mudanças no código):
 
-## Contributing
+```bash
+docker compose up -d --build
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. Verificar status e logs:
 
-## Code of Conduct
+```bash
+docker compose ps
+docker compose logs -f app
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Acessando o Swagger UI
 
-## Security Vulnerabilities
+- Interface: http://localhost:8000/docs
+- Spec JSON (OpenAPI): http://localhost:8000/docs/openapi.json
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Use o botão "Authorize" para inserir um token Bearer (Sanctum) e testar endpoints autenticados.
 
-## License
+## Comandos úteis
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# entrar no container de app (se necessário)
+docker exec -it instaclone-app-1 bash
+
+# limpar/reconstruir caches
+php artisan route:clear
+php artisan config:clear
+php artisan route:cache
+
+# rodar testes
+./vendor/bin/phpunit
+```
+
+## Reconstrução completa
+Se o container não está refletindo alterações (controllers, views, classes), reconstrua a imagem:
+
+```bash
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
+```
+
+Isto removerá volumes locais e garante que a imagem seja recriada com as últimas mudanças.
+
+## Solução de problemas
+- "Could not find driver": geralmente falta `pdo_mysql` no PHP local; execute via Docker (a imagem contém as extensões) ou instale a extensão localmente.
+- `App\\Http\\Controllers\\SwaggerController does not exist`: pode significar que o container está com código antigo. Soluções:
+	- Copiar arquivos para o container (temporário):
+		```bash
+		docker cp app/Http/Controllers/SwaggerController.php instaclone-app-1:/app/app/Http/Controllers/SwaggerController.php
+		docker cp app/Support/Swagger/OpenApiSpec.php instaclone-app-1:/app/app/Support/Swagger/OpenApiSpec.php
+		docker cp -r resources/views/swagger instaclone-app-1:/app/resources/views/swagger
+		```
+	- Recomenda-se rebuild da imagem (veja seção Reconstrução completa).
+	- `composer dump-autoload` dentro do container só funciona se o binário `composer` estiver disponível — o build da imagem já executa Composer quando apropriado.
+
+## Testes
+
+- Rodar suíte de testes dentro do container:
+
+```bash
+docker compose exec app ./vendor/bin/phpunit
+```
+
+## Arquivos relevantes
+- Rotas web (docs): [routes/web.php](routes/web.php)
+- Controller Swagger: [app/Http/Controllers/SwaggerController.php](app/Http/Controllers/SwaggerController.php)
+- Gerador OpenAPI: [app/Support/Swagger/OpenApiSpec.php](app/Support/Swagger/OpenApiSpec.php)
+- View do Swagger UI: [resources/views/swagger/index.blade.php](resources/views/swagger/index.blade.php)
+
+## Contribuindo
+
+PRs são bem-vindos. Para mudanças relevantes, adicione testes e descreva o comportamento esperado.
+
+---
+README atualizado pelo assistente — se quiser, eu adiciono exemplos curl ou um arquivo Postman/Insomnia a partir do OpenAPI.
